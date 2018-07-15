@@ -8,50 +8,43 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        tools:text="@string/overview"
-        android:textAlignment="center"
-        android:textColor="@color/black"
-        android:textSize="20sp"/>
+        tools:text="@string/editor_header_text"
+        android:text="@string/editor_header_text"
+        style="@style/overview"/>
 
     <EditText
         android:id="@+id/edit_product_name"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
         android:hint="@string/product_name"
-        android:textAlignment="center"
-        android:inputType="textCapWords"/>
+        style="@style/edit_text_product_name" />
 
     <EditText
         android:id="@+id/edit_product_price"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
         android:hint="@string/product_price"
-        android:textAlignment="center"
-        android:inputType="numberDecimal"/>
+        style="@style/edit_text_price" />
 
     <EditText
         android:id="@+id/edit_product_quantity"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
         android:hint="@string/product_quantity"
-        android:textAlignment="center"
-        android:inputType="number"/>
+        style="@style/edit_text_quantity" />
 
     <EditText
         android:id="@+id/edit_product_supplier_name"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
         android:hint="@string/product_supplier_name"
-        android:textAlignment="center"
-        android:inputType="textCapWords"/>
+        style="@style/edit_text_supplier_name" />
 
     <EditText
         android:id="@+id/edit_product_supplier_phone_number"
+        android:hint="@string/product_supplier_phone_number"
+        style="@style/edit_text_supplier_phone_number" />
+
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:hint="@string/product_supplier_phone_number"
+        tools:text="@string/notice_editor_required_fields"
         android:textAlignment="center"
-        android:inputType="phone"/>
+        android:textColor="@color/notice_color_red"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:layout_marginTop="@dimen/notice_required_fields"
+        android:text="@string/notice_editor_required_fields"/>
 </LinearLayout>

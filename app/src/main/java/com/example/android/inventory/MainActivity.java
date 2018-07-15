@@ -1,24 +1,35 @@
 package com.example.android.inventory;
 
+import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.Loader;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.android.inventory.data.ProductContract;
 import com.example.android.inventory.data.ProductDbHelper;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    //id of the loader
+    private static final int LOADER_ID = 0;
     //value for accessing ProductDbHelper class
     private ProductDbHelper productDbHelper;
+    //set the adapter of the ListView
+    ProductCursorAdapter pAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,79 +47,35 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(editorIntent);
             }
         });
-        //make an istance of ProductDbHelper class with name productDbHelper
-        //and pass the current activity as it's context
-        productDbHelper = new ProductDbHelper(this);
-    }
 
-    //helper method to provide information about the database in the TextView of the Home screen
-    private void displayDatabaseInfo() {
-        //CREATE or .open the database to read it's contents
-        SQLiteDatabase database = productDbHelper.getReadableDatabase();
-        //String for the columns that need to be used from a table of the Database
-        String[] dbResults = {
-                ProductContract.ProductEntry._ID,
-                ProductContract.ProductEntry.COLUMN_NAME,
-                ProductContract.ProductEntry.COLUMN_PRICE,
-                ProductContract.ProductEntry.COLUMN_QUANTITY,
-                ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME,
-                ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER};
-        // query the products table
-        Cursor cursor = database.query(
-                ProductContract.ProductEntry.TABLE_NAME,
-                dbResults,
-                null,
-                null,
-                null,
-                null,
-                null);
-        //find the view with id:entries and store it to showComponents variable
-        //to use it for displaying the results of the query
-        TextView showComponents = findViewById(R.id.entries);
+        //find the ListView with id:entries and store it to productEntries
+        ListView productEntries = findViewById(R.id.entries);
 
-        try {
-            //set the text at showComponents variable (which use the TextView with id:entries)
-            //this will be the header of the table that will be shown after the query
-            showComponents.setText("The table has : " + cursor.getCount() + " products.\n\n");
-            //decide the order of the displaying information from the products table in inventory.db
-            showComponents.append(ProductContract.ProductEntry._ID + " - " +
-                    ProductContract.ProductEntry.COLUMN_NAME + " - " +
-                    ProductContract.ProductEntry.COLUMN_PRICE + " - " +
-                    ProductContract.ProductEntry.COLUMN_QUANTITY + " - " +
-                    ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME + " - " +
-                    ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER + "\n");
-            //get the true index value of each column in products table
-            int idColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry._ID);
-            int nameColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_NAME);
-            int priceColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRICE);
-            int quantityColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
-            int supplierNameColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME);
-            int supplierPhoneNumberColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER);
-            //iterate through all the returned rows in the cursor
-            while (cursor.moveToNext()) {
-                //use the index value of the columns
-                //show the value at each index
-                int currentId = cursor.getInt(idColumnIndex);
-                String currentName = cursor.getString(nameColumnIndex);
-                int currentPrice = cursor.getInt(priceColumnIndex);
-                int currentQuality = cursor.getInt(quantityColumnIndex);
-                String currentSupplierName = cursor.getString(supplierNameColumnIndex);
-                int currentSupplierPhoneNumber = cursor.getInt(supplierPhoneNumberColumnIndex);
-                //display the values extracted from the table using the columns index value
-                //display the values with this specific order
-                showComponents.append(("\n" + currentId + " - " +
-                        currentName + " - " +
-                        currentPrice + " - " +
-                        currentQuality + " - " +
-                        currentSupplierName + " - " +
-                        currentSupplierPhoneNumber));
+        //find the view with id:empty_view and show it when no items exist in the list
+        View emptyView = findViewById(R.id.empty_view);
+        productEntries.setEmptyView(emptyView);
 
+        //setup the adapter for the list
+        pAdapter = new ProductCursorAdapter(this,null);
+        productEntries.setAdapter(pAdapter);
+
+        //setup the itemClickListener
+        productEntries.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //create the intent to open the EditorActivity
+                Intent editorIntent = new Intent(MainActivity.this,EditorActivity.class);
+
+                //create the URI for a specific product
+                Uri currentItemUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI,id);
+
+                //set the URI on the intent
+                editorIntent.setData(currentItemUri);
+                startActivity(editorIntent);
             }
-        } finally {
-            //close cursor when not needed
-            cursor.close();
-        }
+        });
 
+        getLoaderManager().initLoader(LOADER_ID,null,this);
     }
 
     //method to insert data at the product table of the database
@@ -116,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private void insertProduct() {
         //get the database so it can be altered
         //set the database to write mode which allows the developer to alter it
-        SQLiteDatabase database = productDbHelper.getWritableDatabase();
+        //SQLiteDatabase database = productDbHelper.getWritableDatabase();
         //create a ContentValues object
         ContentValues values = new ContentValues();
         //set the columns as the keys and their respective values as the the products table values
@@ -125,23 +92,25 @@ public class MainActivity extends AppCompatActivity {
         values.put(ProductContract.ProductEntry.COLUMN_QUANTITY, 19);
         values.put(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME, "Black&Decker");
         values.put(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER, 197858632);
-        //print the values created with the "values" object to the screen
-        long newRow = database.insert(ProductContract.ProductEntry.TABLE_NAME, null, values);
+       //get the Uri to have access in data
+        Uri itemUri = getContentResolver().insert(ProductContract.ProductEntry.CONTENT_URI,values);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
-    }
 
     //public method that creates the Menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //infalte the menu with the .xml file named main_menu
+        //inflate the menu with the .xml file named main_menu
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
+
+    //method to delete all entries in the database
+    private void deleteAllEntries(){
+        int rowsDeleted = getContentResolver().delete(ProductContract.ProductEntry.CONTENT_URI,null,null);
+        Log.v("MainActivity",rowsDeleted + "rows deleted from the inventory database");
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -152,14 +121,62 @@ public class MainActivity extends AppCompatActivity {
             //and display the results on screen
             case R.id.insert_dummy_data:
                 insertProduct();
-                displayDatabaseInfo();
                 return true;
                 //if Delete all entries is clicked
-            //this does nothing for now, but should be able to delete all the entries of the database - at some point -
             case R.id.delete_all_entries:
+                deleteAllEntries();
                 return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        //define a projection of the database columns
+        String [] projection = {
+                ProductContract.ProductEntry._ID,
+                ProductContract.ProductEntry.COLUMN_NAME,
+                ProductContract.ProductEntry.COLUMN_PRICE,
+                ProductContract.ProductEntry.COLUMN_QUANTITY };
+
+        //start a query for the specific entries in the database's background
+        return new CursorLoader(this,
+                ProductContract.ProductEntry.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+
+        //update the cursor with a new cursor with updated data
+        pAdapter.swapCursor(data);
+
+    }
+
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+
+        //callback when the data needs to be deleted
+        pAdapter.swapCursor(null);
+
+    }
+
+    public void decreaseQuantityValueByOne(int columnId, int quantity){
+        //initialize quantity value
+        quantity = quantity -1;
+            //create new ContentValues() object
+            ContentValues values = new ContentValues();
+            //put the value of quantity from the the COLUMN_QUANTITY
+            values.put(ProductContract.ProductEntry.COLUMN_QUANTITY, quantity);
+            Uri updateUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI, columnId);
+            getContentResolver().update(updateUri, values, null, null);
+        }
+
 }

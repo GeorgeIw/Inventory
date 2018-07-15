@@ -23,16 +23,19 @@ public class ProductDbHelper extends SQLiteOpenHelper {
                 + ProductContract.ProductEntry.COLUMN_NAME + " TEXT NOT NULL,"
                 + ProductContract.ProductEntry.COLUMN_PRICE + " INTEGER NOT NULL,"
                 + ProductContract.ProductEntry.COLUMN_QUANTITY + " INTEGER NOT NULL,"
-                + ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME + "TEXT NOT NULL,"
-                + ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER + "INTEGER NOT NULL);";
+                + ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME + " TEXT NOT NULL, "
+                + ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER + " INTEGER NOT NULL);";
         //execute the SQL statement created above
         db.execSQL(SQL_CREATE_PRODUCTS_TABLE);
 
     }
-    //method called when the database need to update
+    //method called when the database need to upgrade
+    // NOTE : since i couldn't think of something that should be upgraded, i didn't include extra versions of the database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        //in this part of the Inventory App there is no need for upgrading the databse
-        //so this method does nothing for now
+        //drop table if already exists
+        db.execSQL(ProductContract.ProductEntry.TABLE_NAME);
+        //create table again
+        onCreate(db);
     }
 }
