@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -46,6 +47,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private EditText supplierPhoneNumberEditText;
     //flag to keep track weather the item has been modified
     private boolean pItemChanged = false;
+    //minus button for quantity
+    private Button minusButton;
+    //plus button for quantity
+    private Button plusButton;
 
 
     //onTouchListener that notifies when the view is altered
@@ -56,7 +61,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             return false;
         }
     };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,8 +88,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         nameEditText = findViewById(R.id.edit_product_name);
         //find the view with id:edit_product_price and store it to PriceEditText variable
         priceEditText = findViewById(R.id.edit_product_price);
+        //find the Button with id:minus_button and store it to minusButton variable
+        minusButton = findViewById(R.id.minus_button);
         //find the view with id:edit_product_quantity and store it to QuantityEditText variable
         quantityEditText = findViewById(R.id.edit_product_quantity);
+        //find the Button with id:plus_button and store it to plusButton variable
+        plusButton = findViewById(R.id.plus_button);
         //find the view with id:edit_product_supplier_name and store it to SupplierNameEditText variable
         supplierNameEditText = findViewById(R.id.edit_product_supplier_name);
         //find the view with id:edit_product_supplier_phone_number and store it to SupplierPhoneNumberEditText
@@ -97,7 +105,34 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         quantityEditText.setOnTouchListener(pTouchListener);
         supplierNameEditText.setOnTouchListener(pTouchListener);
         supplierPhoneNumberEditText.setOnTouchListener(pTouchListener);
+
+        //set the ClickListener to minusButton
+        minusButton.setOnClickListener(minusButtonClickListener);
+        //set the clickListener to plusButton
+        plusButton.setOnClickListener(plusButtonClickListener);
     }
+
+    //OnClickListener method for minusButton
+    private View.OnClickListener minusButtonClickListener = (new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int quantityEditTextField = Integer.parseInt(quantityEditText.getText().toString());
+            quantityEditTextField = quantityEditTextField - 1;
+            if(quantityEditTextField >= 0) {
+                quantityEditText.setText(String.valueOf(quantityEditTextField));
+            }
+            }
+    });
+
+    //OnClickListener method for plusButton
+    private View.OnClickListener plusButtonClickListener = (new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int quantityEditTextField = Integer.parseInt(quantityEditText.getText().toString());
+            quantityEditTextField = quantityEditTextField + 1;
+            quantityEditText.setText(String.valueOf(quantityEditTextField));
+        }
+    });
 
     //method to set the action when the value of the field is null
     //if the value is null, do nothing

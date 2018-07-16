@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
@@ -30,7 +31,7 @@ public class ProductCursorAdapter extends CursorAdapter {
 
     //bind the data to the appropriate view
     @Override
-    public void bindView(View view, final Context context, final Cursor cursor) {
+    public void bindView(final View view, final Context context, final Cursor cursor) {
 
 
         //find the view with id:product_name and store it to productName variable
@@ -42,27 +43,31 @@ public class ProductCursorAdapter extends CursorAdapter {
         //find the Button with id:sale_button and store it to saleButton variable
         final Button saleButton = view.findViewById(R.id.sale_button);
 
-        saleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //int productQuantityInv = cursor.getInt(productQuantityColumnIndex);
-                //productQuantityInv = productQuantityInv - 1;
-                // productQuantity.setText(Integer.toString(productQuantityInv));
-                //int quantityColumnValue = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
-                //int quantityValue = cursor.getInt(quantityColumnValue) - SALE_DECREASE_AMOUNT;
-                //productQuantity.setText(Integer.toString(quantityValue));
 
-                int zeroStoppingPoint = 0;
-                int columnIndex = cursor.getColumnIndex(ProductContract.ProductEntry._ID);
-                int quantityIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
-                String column = cursor.getString(columnIndex);
-                String quantity = cursor.getString(quantityIndex);
-                if( Integer.parseInt(quantity) > zeroStoppingPoint){
-                MainActivity mainActivity = (MainActivity) context;
-                mainActivity.decreaseQuantityValueByOne(Integer.valueOf(column), Integer.valueOf(quantity));
-                }
-            }
-        });
+            saleButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //int productQuantityInv = cursor.getInt(productQuantityColumnIndex);
+                    //productQuantityInv = productQuantityInv - 1;
+                    // productQuantity.setText(Integer.toString(productQuantityInv));
+                    //int quantityColumnValue = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
+                    //int quantityValue = cursor.getInt(quantityColumnValue) - SALE_DECREASE_AMOUNT;
+                    //productQuantity.setText(Integer.toString(quantityValue));
+
+                        int zeroStoppingPoint = 0;
+                        int columnIndex = cursor.getColumnIndex(ProductContract.ProductEntry._ID);
+                        int quantityIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
+                        String column = cursor.getString(columnIndex);
+                        String quantity = cursor.getString(quantityIndex);
+                        if (Integer.parseInt(quantity) > zeroStoppingPoint) {
+                            MainActivity mainActivity = (MainActivity) context;
+                            mainActivity.decreaseQuantityValueByOne(Integer.valueOf(column), Integer.valueOf(quantity));
+                        }
+
+                    }
+
+            });
+
 
 
         //find and store the column COLUMN_NAME of the database to productNameColumnIndex
