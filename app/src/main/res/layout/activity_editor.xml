@@ -22,31 +22,41 @@
         android:hint="@string/product_price"
         style="@style/edit_text_price" />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/minus_button"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:background="@drawable/minus_button"/>
 
     <EditText
         android:id="@+id/edit_product_quantity"
         android:hint="@string/product_quantity"
         style="@style/edit_text_quantity" />
 
-        <Button
-            android:id="@+id/plus_button"
-            android:layout_weight="1"
-            android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:background="@drawable/plus_button"/>
+        <ImageButton
+            android:id="@+id/minus_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_alignParentLeft="true"
+            android:adjustViewBounds="true"
+            android:background="@drawable/minus_button"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="20dp"
+            android:focusable="false"
+            android:focusableInTouchMode="false"/>
 
-    </LinearLayout>
+        <ImageButton
+            android:id="@+id/plus_button"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/plus_button"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"/>
+
+    </RelativeLayout>
 
     <EditText
         android:id="@+id/edit_product_supplier_name"

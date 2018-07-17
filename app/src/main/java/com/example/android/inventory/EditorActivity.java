@@ -21,6 +21,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.android.inventory.data.ProductContract;
@@ -48,9 +49,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     //flag to keep track weather the item has been modified
     private boolean pItemChanged = false;
     //minus button for quantity
-    private Button minusButton;
+    private ImageButton minusButton;
     //plus button for quantity
-    private Button plusButton;
+    private ImageButton plusButton;
 
 
     //onTouchListener that notifies when the view is altered
