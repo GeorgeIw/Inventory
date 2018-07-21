@@ -1,8 +1,11 @@
 package com.example.android.inventory;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
+import android.support.annotation.BinderThread;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +17,15 @@ import android.widget.TextView;
 
 import com.example.android.inventory.data.ProductContract;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class ProductCursorAdapter extends CursorAdapter {
+
+    @BindView(R.id.product_name) TextView productName;
+    @BindView(R.id.product_price) TextView productPrice;
+    @BindView(R.id.product_quantity) TextView productQuantity;
+    @BindView(R.id.sale_button) Button saleButton;
 
     //constructor of the class
     public ProductCursorAdapter(Context context, Cursor cursor) {
@@ -31,38 +42,9 @@ public class ProductCursorAdapter extends CursorAdapter {
     //bind the data to the appropriate view
     @Override
     public void bindView(final View view, final Context context, final Cursor cursor) {
+        ButterKnife.bind(this,view);
 
-        //find the view with id:product_name and store it to productName variable
-        TextView productName = view.findViewById(R.id.product_name);
-        //find the view with id:product_price and store it to productPrice variable
-        TextView productPrice = view.findViewById(R.id.product_price);
-        //find the view with id:product_quantity and store it to productQuantity variable
-        final TextView productQuantity = view.findViewById(R.id.product_quantity);
-        //find the view with id:sale_button and store it to saleButton variable
-        final Button saleButton = view.findViewById(R.id.sale_button);
-
-        saleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                //ProductCursorAdapter adapter = new ProductCursorAdapter(context, null);
-                //for (int i = adapter.getItemId(position) ; i++)
-                //adapter.getItemId(position);
-                int zeroStoppingPoint = 0;
-                int columnIndex = cursor.getColumnIndex(ProductContract.ProductEntry._ID);
-                int quantityIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
-                String column = cursor.getString(columnIndex);
-                String quantity = cursor.getString(quantityIndex);
-
-                    if (Integer.parseInt(quantity) > zeroStoppingPoint) {
-                        MainActivity mainActivity = (MainActivity) context;
-                        mainActivity.decreaseQuantityValueByOne(Integer.valueOf(column), Integer.valueOf(quantity));
-                    }
-            }
-
-        });
-
-
+        int productIdColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry._ID);
         //find and store the column COLUMN_NAME of the database to productNameColumnIndex
         int productNameColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_NAME);
         //find and store the column COLUMN_PRICE of the database to productPriceColumnIndex
@@ -70,17 +52,40 @@ public class ProductCursorAdapter extends CursorAdapter {
         //find and store the column COLUMN_QUANTITY of the database to productQuantityColumnIndex
         final int productQuantityColumnIndex = cursor.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
 
+
         //read and get the data from the Cursor
+        final int productIdInv = cursor.getInt(productIdColumnIndex);
         String productNameInv = cursor.getString(productNameColumnIndex);
         int productPriceInv = cursor.getInt(productPriceColumnIndex);
         final int productQuantityInv = cursor.getInt(productQuantityColumnIndex);
+
 
         //set and update the view with the data taken from the cursor
         productName.setText(productNameInv);
         productPrice.setText(Integer.toString(productPriceInv) + "$");
         productQuantity.setText(Integer.toString(productQuantityInv) + " pcs ");
 
-        }
+
+        saleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                int quantity = productQuantityInv - 1;
+                ContentValues values = new ContentValues();
+                values.put(ProductContract.ProductEntry.COLUMN_QUANTITY,quantity);
+                String selection = ProductContract.ProductEntry._ID + "=?";
+                Uri updateUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI,productIdInv);
+                if(quantity >= 0) {
+                    context.getContentResolver().update(updateUri, values, selection, null);
+                }
+            }
+
+        });
+
+
+
+
+    }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {

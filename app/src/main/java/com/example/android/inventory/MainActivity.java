@@ -1,6 +1,7 @@
 package com.example.android.inventory;
 
 import android.app.LoaderManager;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -8,6 +9,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.android.inventory.data.InventoryProvider;
 import com.example.android.inventory.data.ProductContract;
 import com.example.android.inventory.data.ProductDbHelper;
 
@@ -26,10 +29,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     //id of the loader
     private static final int LOADER_ID = 0;
-    //value for accessing ProductDbHelper class
-    private ProductDbHelper productDbHelper;
     //set the adapter of the ListView
     ProductCursorAdapter pAdapter;
+    //value for accessing ProductDbHelper class
+    private ProductDbHelper productDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         productEntries.setEmptyView(emptyView);
 
         //setup the adapter for the list
-        pAdapter = new ProductCursorAdapter(this,null);
+        pAdapter = new ProductCursorAdapter(this, null);
         productEntries.setAdapter(pAdapter);
 
         //setup the itemClickListener
@@ -64,10 +67,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //create the intent to open the EditorActivity
-                Intent editorIntent = new Intent(MainActivity.this,EditorActivity.class);
+                Intent editorIntent = new Intent(MainActivity.this, EditorActivity.class);
 
                 //create the URI for a specific product
-                Uri currentItemUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI,id);
+                Uri currentItemUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI, id);
 
                 //set the URI on the intent
                 editorIntent.setData(currentItemUri);
@@ -75,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        getLoaderManager().initLoader(LOADER_ID,null,this);
+        getLoaderManager().initLoader(LOADER_ID, null, this);
     }
 
     //method to insert data at the product table of the database
@@ -92,8 +95,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         values.put(ProductContract.ProductEntry.COLUMN_QUANTITY, 19);
         values.put(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME, "Black&Decker");
         values.put(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER, 197858632);
-       //get the Uri to have access in data
-        Uri itemUri = getContentResolver().insert(ProductContract.ProductEntry.CONTENT_URI,values);
+        //get the Uri to have access in data
+        Uri itemUri = getContentResolver().insert(ProductContract.ProductEntry.CONTENT_URI, values);
     }
 
 
@@ -106,9 +109,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     //method to delete all entries in the database
-    private void deleteAllEntries(){
-        int rowsDeleted = getContentResolver().delete(ProductContract.ProductEntry.CONTENT_URI,null,null);
-        Log.v("MainActivity",rowsDeleted + "rows deleted from the inventory database");
+    private void deleteAllEntries() {
+        int rowsDeleted = getContentResolver().delete(ProductContract.ProductEntry.CONTENT_URI, null, null);
+        Log.v("MainActivity", rowsDeleted + "rows deleted from the inventory database");
     }
 
 
@@ -122,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             case R.id.insert_dummy_data:
                 insertProduct();
                 return true;
-                //if Delete all entries is clicked
+            //if Delete all entries is clicked
             case R.id.delete_all_entries:
                 deleteAllEntries();
                 return true;
@@ -136,11 +139,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
         //define a projection of the database columns
-        String [] projection = {
+        String[] projection = {
                 ProductContract.ProductEntry._ID,
                 ProductContract.ProductEntry.COLUMN_NAME,
                 ProductContract.ProductEntry.COLUMN_PRICE,
-                ProductContract.ProductEntry.COLUMN_QUANTITY };
+                ProductContract.ProductEntry.COLUMN_QUANTITY};
 
         //start a query for the specific entries in the database's background
         return new CursorLoader(this,
@@ -167,16 +170,5 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         pAdapter.swapCursor(null);
 
     }
-
-    public void decreaseQuantityValueByOne(int columnId, int quantity){
-        //initialize quantity value
-        quantity = quantity -1;
-            //create new ContentValues() object
-            ContentValues values = new ContentValues();
-            //put the value of quantity from the the COLUMN_QUANTITY
-            values.put(ProductContract.ProductEntry.COLUMN_QUANTITY, quantity);
-            Uri updateUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI, columnId);
-            getContentResolver().update(updateUri, values, null, null);
-        }
 
 }

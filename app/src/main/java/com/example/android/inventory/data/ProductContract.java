@@ -17,6 +17,7 @@ public final class ProductContract {
     public static final String PRODUCTS_PATH = "products";
 
 
+
     //inner class with constants for the products database table
     public static final class ProductEntry implements BaseColumns {
 

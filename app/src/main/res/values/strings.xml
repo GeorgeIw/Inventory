@@ -27,4 +27,6 @@
     <string name="abort">Abort</string>
     <string name="continue_editing">Continue Editing</string>
     <string name="do_nothing_when_field_isnull">All fields are required to adjust OR add a product</string>
+    <string name="new_product_added_to_database">The new product has been added to the database</string>
+    <string name="edit_product">Edit Product</string>
 </resources>

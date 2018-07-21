@@ -8,6 +8,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <TextView
+        android:id="@+id/overview_title"
         tools:text="@string/editor_header_text"
         android:text="@string/editor_header_text"
         style="@style/overview"/>

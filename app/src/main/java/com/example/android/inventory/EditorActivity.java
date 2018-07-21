@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.inventory.data.ProductContract;
@@ -80,6 +81,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             invalidateOptionsMenu();
         } else {
             setTitle(getString(R.string.editor_edit_product_header));
+            TextView overviewTitle = findViewById(R.id.overview_title);
+            overviewTitle.setText(R.string.edit_product);
             //initialize a loader to read the product data from the database
             getLoaderManager().initLoader(ITEM_LOADER, null, this);
         }
@@ -223,7 +226,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             if (newUri == null) {
                 Toast.makeText(this, getString(R.string.editor_error_saving_product), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, getString(R.string.editor_successful_update), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.new_product_added_to_database), Toast.LENGTH_SHORT).show();
             }
         } else {
             //else, this is an existing product so update the info for it
