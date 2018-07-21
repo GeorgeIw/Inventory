@@ -9,12 +9,17 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
+
+import java.math.BigInteger;
 
 public class InventoryProvider extends ContentProvider {
     //Uri matcher code for the Uri of the products table
     private static final int PRODUCTS = 0;
     //Uri matcher code for the Uri of a specific product of the table
     private static final int PRODUCTS_ID = 1;
+
+    public static final String LOG_TAG = InventoryProvider.class.getSimpleName();
 
     public static final UriMatcher inventoryUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -95,8 +100,8 @@ public class InventoryProvider extends ContentProvider {
             throw new IllegalArgumentException("This product requires a Supplier Name");
         }
 
-        Integer supplierNumber = values.getAsInteger(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER);
-        if (supplierNumber == null){
+        String supplierNumber = values.getAsString(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER);
+        if (supplierNumber == null || Integer.parseInt(supplierNumber) < 10){
             throw new IllegalArgumentException("This product requires a Phone Number of it's Supplier");
         }
 
@@ -104,6 +109,7 @@ public class InventoryProvider extends ContentProvider {
 
         long id = database.insert(ProductContract.ProductEntry.TABLE_NAME,null,values);
         if (id == -1){
+            Log.e(LOG_TAG,"Failed to insert row for " +uri);
             return null;
         }
 
@@ -216,11 +222,49 @@ public class InventoryProvider extends ContentProvider {
             case PRODUCTS:
                 return updateProduct(uri, values, selection, selectionArgs);
             case PRODUCTS_ID:
-                selection = ProductContract.ProductEntry._ID + "/?";
+                selection = ProductContract.ProductEntry._ID + "=?";
                 selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
                 return updateProduct(uri,values,selection,selectionArgs);
             default:
                 throw new IllegalArgumentException("Cannot update " + uri);
         }
     }
+
+   /**private Uri insertProduct (Uri uri, ContentValues values){
+        String name = values.getAsString(ProductContract.ProductEntry.COLUMN_NAME);
+        if (name == null){
+            throw new IllegalArgumentException("This product must have a name");
+        }
+
+        Integer price = values.getAsInteger(ProductContract.ProductEntry.COLUMN_PRICE);
+        if (price == null || price < 0){
+            throw new IllegalArgumentException("This product requires a price");
+        }
+
+        Integer quantity = values.getAsInteger(ProductContract.ProductEntry.COLUMN_QUANTITY);
+        if (quantity == null || quantity < 0){
+            throw new IllegalArgumentException("This product must have a quantity value");
+        }
+
+        String supplierName = values.getAsString(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME);
+        if (supplierName == null){
+            throw new IllegalArgumentException("This product must have it's Supplier's Name");
+        }
+
+        String supplierPhoneNumber = values.getAsString(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER);
+        if (supplierPhoneNumber == null || Integer.parseInt(supplierPhoneNumber) < 10){
+            throw new IllegalArgumentException("This product must have it's Supplier's phone number");
+        }
+
+        SQLiteDatabase database = pDbHelper.getWritableDatabase();
+
+        long id = database.insert(ProductContract.ProductEntry.TABLE_NAME,null,values);
+        if (id == -1) {
+            Log.e(LOG_TAG,"Failed to insert row for " + uri);
+            return null;
+        }
+
+        getContext().getContentResolver().notifyChange(uri, null);
+        return ContentUris.withAppendedId(uri, id);
+   }*/
 }
