@@ -1,7 +1,7 @@
 package com.example.android.inventory;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -9,32 +9,44 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.inventory.data.ProductContract;
 import com.example.android.inventory.data.ProductDbHelper;
 
-import org.w3c.dom.Text;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Blob;
 
 //this class is for adding a new product in the database
 //or edit an existing one
 public class EditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
     //item loader
     private static final int ITEM_LOADER = 0;
+    private static final String STATE_URI = "STATE_URI";
     //content URI for the existing item-product
     private Uri itemCurrentUri;
     //EditText field for the product name
@@ -53,6 +65,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private ImageButton minusButton;
     //plus button for quantity
     private ImageButton plusButton;
+    //Button field for call now ACTION
+    private Button callNowButton;
+    //TextView for starting the uploading process the product's image
+    private TextView uploadImageTextView;
+    //ImageView to show the product's image
+    private ImageView itemImage;
+    //constant for the image source
+    private static final int PICK_IMAGE_REQUEST = 0;
+
+    private Uri pUri;
 
 
     //onTouchListener that notifies when the view is altered
@@ -88,23 +110,33 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
 
 
-        //find the view with id:edit_product_name and store it to NameEditText variable
+        //find the view with id:edit_product_name and store it to NameEditText variable for use
         nameEditText = findViewById(R.id.edit_product_name);
-        //find the view with id:edit_product_price and store it to PriceEditText variable
+        //find the view with id:edit_product_price and store it to PriceEditText variable for use
         priceEditText = findViewById(R.id.edit_product_price);
-        //find the Button with id:minus_button and store it to minusButton variable
+        //find the Button with id:minus_button and store it to minusButton variable for use
         minusButton = findViewById(R.id.minus_button);
-        //find the view with id:edit_product_quantity and store it to QuantityEditText variable
+        //find the view with id:edit_product_quantity and store it to QuantityEditText variable for use
         quantityEditText = findViewById(R.id.edit_product_quantity);
-        //find the Button with id:plus_button and store it to plusButton variable
+        //find the Button with id:plus_button and store it to plusButton variable for use
         plusButton = findViewById(R.id.plus_button);
-        //find the view with id:edit_product_supplier_name and store it to SupplierNameEditText variable
+        //find the view with id:edit_product_supplier_name and store it to SupplierNameEditText variable for use
         supplierNameEditText = findViewById(R.id.edit_product_supplier_name);
-        //find the view with id:edit_product_supplier_phone_number and store it to SupplierPhoneNumberEditText
+        //find the view with id:edit_product_supplier_phone_number and store it to SupplierPhoneNumberEditText for use
         supplierPhoneNumberEditText = findViewById(R.id.edit_product_supplier_phone_number);
+        //find the view with id:call_now_button and store it to callNowButton variable for use
+        callNowButton = findViewById(R.id.call_now_button);
+        //find the view with id:item_image and store it to itemImage variable for use
+        itemImage = findViewById(R.id.item_image);
+        //find the view with id:upload_image_view and store it to uploadImageTextView variable for use
+        uploadImageTextView = findViewById(R.id.upload_image_view);
+
+        //set the visibility to INVISIBLE if there is no content to itemImage
+
 
         //set the TouchListener to determine if the field has been modified
         nameEditText.setOnTouchListener(pTouchListener);
+        itemImage.setOnTouchListener(pTouchListener);
         priceEditText.setOnTouchListener(pTouchListener);
         quantityEditText.setOnTouchListener(pTouchListener);
         supplierNameEditText.setOnTouchListener(pTouchListener);
@@ -114,6 +146,12 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         minusButton.setOnClickListener(minusButtonClickListener);
         //set the clickListener to plusButton
         plusButton.setOnClickListener(plusButtonClickListener);
+        //set the clickListener to callNowButon
+        callNowButton.setOnClickListener(callNowButtonClickListener);
+        //set the clickListener to uploadImageTextView
+        uploadImageTextView.setOnClickListener(uploadImageClickListener);
+
+
     }
 
     //OnClickListener method for minusButton
@@ -122,10 +160,10 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         public void onClick(View v) {
             int quantityEditTextField = Integer.parseInt(quantityEditText.getText().toString());
             quantityEditTextField = quantityEditTextField - 1;
-            if(quantityEditTextField >= 0) {
+            if (quantityEditTextField >= 0) {
                 quantityEditText.setText(String.valueOf(quantityEditTextField));
             }
-            }
+        }
     });
 
     //OnClickListener method for plusButton
@@ -138,10 +176,109 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         }
     });
 
+    //OnClickListener to open the dial on mobile with the stored phone number
+    View.OnClickListener callNowButtonClickListener = (new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            String dialPhoneNumber = supplierPhoneNumberEditText.getText().toString().trim();
+            Intent call = new Intent(Intent.ACTION_DIAL);
+            call.setData(Uri.parse("tel:" + dialPhoneNumber));
+            startActivity(call);
+        }
+    });
+
+    //OnClickListener to open the image selector to upload image from gallery
+    View.OnClickListener uploadImageClickListener = (new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            openImageSelector();
+        }
+    });
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if (pUri == null) {
+            outState.putString(STATE_URI, String.valueOf(pUri));
+        }
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        ViewTreeObserver viewTreeObserver = itemImage.getViewTreeObserver();
+        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                itemImage.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                itemImage.setImageBitmap(getBitmapFromUri(pUri));
+            }
+        });
+    }
+
+    public Bitmap getBitmapFromUri(Uri uri) {
+        if (uri == null || uri.toString().isEmpty()) {
+            return null;
+        }
+
+        int targetWidth = itemImage.getWidth();
+        int targetHeight = itemImage.getHeight();
+
+        InputStream input = null;
+        try {
+            input = this.getContentResolver().openInputStream(uri);
+            BitmapFactory.Options bitmapFactoryOptions = new BitmapFactory.Options();
+            bitmapFactoryOptions.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
+            input.close();
+
+            int photoWidth = bitmapFactoryOptions.outWidth;
+            int photoHeight = bitmapFactoryOptions.outHeight;
+
+            int scaleFactor = Math.min(photoWidth / targetWidth, photoHeight / targetHeight);
+
+            bitmapFactoryOptions.inJustDecodeBounds = false;
+            bitmapFactoryOptions.inSampleSize = scaleFactor;
+            bitmapFactoryOptions.inPurgeable = true;
+
+            input = this.getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
+            input.close();
+            return bitmap;
+        } catch (FileNotFoundException fne) {
+            Log.e(LOG_TAG, "Failed to load Image", fne);
+            return null;
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Failed to load Image", e);
+            return null;
+        } finally {
+            try {
+                input.close();
+            } catch (IOException ioe) {
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
+            if (data != null) {
+                pUri = data.getData();
+                Log.i(LOG_TAG, "Uri: " + pUri.toString());
+
+                itemImage.setImageBitmap(getBitmapFromUri(pUri));
+            }
+        }
+    }
+
     //method to set the action when the value of the field is null
     //if the value is null, do nothing
-    private double parseDouble(String s){
-        if(s == null || s.isEmpty()){
+    private double parseDouble(String s) {
+        if (s == null || s.isEmpty()) {
             return 0;
         } else {
             return Double.parseDouble(s);
@@ -150,8 +287,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     //method to set the action when the value of the field is null
     //if the value is null, do nothing
-    private int parseInt(String s){
-        if(s == null || s.isEmpty()){
+    private int parseInt(String s) {
+        if (s == null || s.isEmpty()) {
             return 0;
         } else {
             return Integer.parseInt(s);
@@ -160,8 +297,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     //method to set the action when the value of the field is null
     //if the value is null, do nothing
-    private long parseLong(String s){
-        if(s == null || s.isEmpty()){
+    private long parseLong(String s) {
+        if (s == null || s.isEmpty()) {
             return 0;
         } else {
             return Long.parseLong(s);
@@ -178,6 +315,8 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
     //let the user insert a new product in the database
     private void insertProduct() {
+
+
         //get the input from the EditText fields
         //use toString to print the output
         //and trim to avoid any unneeded whitespace
@@ -191,15 +330,16 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String productQuantity = quantityEditText.getText().toString().trim();
         int quantity = parseInt(productQuantity);
         String productSupplier = supplierNameEditText.getText().toString().trim();
-        //same as before, get the TEXT value of the column and reform it to INTEGER value
-        String productSupplierPhoneNumber = supplierPhoneNumberEditText.getText().toString().trim();
+        //same as before, get the TEXT value of the column and reform it to long value
+        final String productSupplierPhoneNumber = supplierPhoneNumberEditText.getText().toString().trim();
         long supplierPhoneNumber = parseLong(productSupplierPhoneNumber);
+
 
         //check if this is a new product and if the fields of the editor are empty
         if (itemCurrentUri == null && TextUtils.isEmpty(productName) || TextUtils.isEmpty(productPrice) || TextUtils.isEmpty(productQuantity)
                 || TextUtils.isEmpty(productSupplier) || TextUtils.isEmpty(productSupplierPhoneNumber)) {
 
-            Toast.makeText(this,getString(R.string.do_nothing_when_field_isnull),Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.do_nothing_when_field_isnull), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -252,6 +392,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
         return true;
     }
+
     //delete only if a product exists
     public void deleteProduct() {
         if (itemCurrentUri != null) {
@@ -314,7 +455,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             //if the user clicks on save option,
-            //save the product that was inputed, and close the activity
+            //save the product that was inputted, and close the activity
             case R.id.save_button:
                 insertProduct();
                 finish();
@@ -371,6 +512,7 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String[] projection = {
                 ProductContract.ProductEntry._ID,
                 ProductContract.ProductEntry.COLUMN_NAME,
+                ProductContract.ProductEntry.COLUMN_IMAGE,
                 ProductContract.ProductEntry.COLUMN_PRICE,
                 ProductContract.ProductEntry.COLUMN_QUANTITY,
                 ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME,
@@ -393,18 +535,23 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         //go to the first row of the cursor and read data from it
         if (data.moveToFirst()) {
             int nameColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_NAME);
+            int imageColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_IMAGE);
             int priceColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRICE);
             int quantityColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
             int supplierNameColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME);
             int supplierPhoneNumberColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER);
+
             //extract the value from the cursor
             String name = data.getString(nameColumnIndex);
+            String image = data.getString(imageColumnIndex);
             int price = data.getInt(priceColumnIndex);
             int quantity = data.getInt(quantityColumnIndex);
             String supplierName = data.getString(supplierNameColumnIndex);
             int supplierPhoneNumber = data.getInt(supplierPhoneNumberColumnIndex);
+
             //update the view with values from the new database
             nameEditText.setText(name);
+            itemImage.setImageDa
             priceEditText.setText(Integer.toString(price));
             quantityEditText.setText(Integer.toString(quantity));
             supplierNameEditText.setText(supplierName);
@@ -423,4 +570,36 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         supplierPhoneNumberEditText.setText("");
 
     }
+
+    //method() for opening the gallery to pick an image for an item
+    public void openImageSelector() {
+        Intent intent;
+        //use ACTION_GET_CONTENT if the API is lower than API 19
+        if (Build.VERSION.SDK_INT < 19) {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            //use ACTION_OPEN_DOCUMENT if the API is higher than API 19
+        } else {
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+        }
+
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Upload Image"), PICK_IMAGE_REQUEST);
+    }
+
+    public void addImage(byte[] uploadImage){
+        ProductDbHelper dbHelper = new ProductDbHelper(this);
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(ProductContract.ProductEntry.COLUMN_IMAGE,uploadImage);
+
+        try {
+            database.insertOrThrow(ProductContract.ProductEntry.TABLE_NAME,null,values);
+        } catch (SQLException e) {
+            Log.i(LOG_TAG,"Error: " + e.toString());
+        }
+
+        database.close();
+    }
+
 }
