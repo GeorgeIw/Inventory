@@ -5,14 +5,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.BinderThread;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CursorAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.example.android.inventory.data.ProductContract;
@@ -56,13 +53,13 @@ public class ProductCursorAdapter extends CursorAdapter {
         //read and get the data from the Cursor
         final int productIdInv = cursor.getInt(productIdColumnIndex);
         String productNameInv = cursor.getString(productNameColumnIndex);
-        int productPriceInv = cursor.getInt(productPriceColumnIndex);
+        double productPriceInv = cursor.getDouble(productPriceColumnIndex);
         final int productQuantityInv = cursor.getInt(productQuantityColumnIndex);
 
 
         //set and update the view with the data taken from the cursor
         productName.setText(productNameInv);
-        productPrice.setText(Integer.toString(productPriceInv) + "$");
+        productPrice.setText(Double.toString(productPriceInv) + "$");
         productQuantity.setText(Integer.toString(productQuantityInv) + " pcs ");
 
 
@@ -70,20 +67,21 @@ public class ProductCursorAdapter extends CursorAdapter {
             @Override
             public void onClick(View v) {
 
+                //how much the value of quantity will decrease in every button click
                 int quantity = productQuantityInv - 1;
                 ContentValues values = new ContentValues();
+                //put the new value of quantity into the database
                 values.put(ProductContract.ProductEntry.COLUMN_QUANTITY,quantity);
                 String selection = ProductContract.ProductEntry._ID + "=?";
+                //update the product uri for the specific id
                 Uri updateUri = ContentUris.withAppendedId(ProductContract.ProductEntry.CONTENT_URI,productIdInv);
+                //decrease the quantity value only when it's bigger than 0
                 if(quantity >= 0) {
                     context.getContentResolver().update(updateUri, values, selection, null);
                 }
             }
 
         });
-
-
-
 
     }
 

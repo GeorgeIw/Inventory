@@ -7,4 +7,6 @@
     <color name="fab_background">#ffffff</color>
     <color name="status_bar_color">#5b5f66</color>
     <color name="notice_color_red">#d80a26</color>
+    <color name="sale_button_green">#0dc11c</color>
+    <color name="sale_button_green2">#0dd806</color>
 </resources>

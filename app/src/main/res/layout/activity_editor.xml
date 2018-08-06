@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
 <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -69,6 +75,15 @@
         android:hint="@string/product_supplier_phone_number"
         style="@style/edit_text_supplier_phone_number" />
 
+        <Button
+            android:id="@+id/call_now_button"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="50dp"
+            android:layout_marginLeft="30dp"
+            android:background="@drawable/call_now_button" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -80,3 +95,4 @@
         android:layout_marginTop="@dimen/notice_required_fields"
         android:text="@string/notice_editor_required_fields"/>
 </LinearLayout>
+</ScrollView>

@@ -48,5 +48,8 @@
         android:text="Sale"
         android:textAlignment="center"
         android:focusable="false"
-        android:focusableInTouchMode="false"/>
+        android:textStyle="bold"
+        android:focusableInTouchMode="false"
+        android:background="@drawable/sale_button_style"
+        android:textColor="#ffffff"/>
 </LinearLayout>

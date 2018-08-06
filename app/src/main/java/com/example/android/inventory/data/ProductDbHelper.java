@@ -21,10 +21,10 @@ public class ProductDbHelper extends SQLiteOpenHelper {
         String SQL_CREATE_PRODUCTS_TABLE = "CREATE TABLE " + ProductContract.ProductEntry.TABLE_NAME + "("
                 + ProductContract.ProductEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + ProductContract.ProductEntry.COLUMN_NAME + " TEXT NOT NULL,"
-                + ProductContract.ProductEntry.COLUMN_PRICE + " INTEGER NOT NULL,"
+                + ProductContract.ProductEntry.COLUMN_PRICE + " DOUBLE NOT NULL,"
                 + ProductContract.ProductEntry.COLUMN_QUANTITY + " INTEGER NOT NULL,"
                 + ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME + " TEXT NOT NULL, "
-                + ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER + " INTEGER NOT NULL);";
+                + ProductContract.ProductEntry.COLUMN_SUPPLIER_PHONE_NUMBER + " LONG NOT NULL);";
         //execute the SQL statement created above
         db.execSQL(SQL_CREATE_PRODUCTS_TABLE);
 

@@ -46,7 +46,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     //item loader
     private static final int ITEM_LOADER = 0;
-    private static final String STATE_URI = "STATE_URI";
     //content URI for the existing item-product
     private Uri itemCurrentUri;
     //EditText field for the product name
@@ -67,14 +66,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
     private ImageButton plusButton;
     //Button field for call now ACTION
     private Button callNowButton;
-    //TextView for starting the uploading process the product's image
-    private TextView uploadImageTextView;
-    //ImageView to show the product's image
-    private ImageView itemImage;
-    //constant for the image source
-    private static final int PICK_IMAGE_REQUEST = 0;
-
-    private Uri pUri;
 
 
     //onTouchListener that notifies when the view is altered
@@ -126,17 +117,9 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         supplierPhoneNumberEditText = findViewById(R.id.edit_product_supplier_phone_number);
         //find the view with id:call_now_button and store it to callNowButton variable for use
         callNowButton = findViewById(R.id.call_now_button);
-        //find the view with id:item_image and store it to itemImage variable for use
-        itemImage = findViewById(R.id.item_image);
-        //find the view with id:upload_image_view and store it to uploadImageTextView variable for use
-        uploadImageTextView = findViewById(R.id.upload_image_view);
-
-        //set the visibility to INVISIBLE if there is no content to itemImage
-
 
         //set the TouchListener to determine if the field has been modified
         nameEditText.setOnTouchListener(pTouchListener);
-        itemImage.setOnTouchListener(pTouchListener);
         priceEditText.setOnTouchListener(pTouchListener);
         quantityEditText.setOnTouchListener(pTouchListener);
         supplierNameEditText.setOnTouchListener(pTouchListener);
@@ -149,8 +132,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         //set the clickListener to callNowButon
         callNowButton.setOnClickListener(callNowButtonClickListener);
         //set the clickListener to uploadImageTextView
-        uploadImageTextView.setOnClickListener(uploadImageClickListener);
-
 
     }
 
@@ -186,94 +167,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
             startActivity(call);
         }
     });
-
-    //OnClickListener to open the image selector to upload image from gallery
-    View.OnClickListener uploadImageClickListener = (new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            openImageSelector();
-        }
-    });
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        if (pUri == null) {
-            outState.putString(STATE_URI, String.valueOf(pUri));
-        }
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-
-        ViewTreeObserver viewTreeObserver = itemImage.getViewTreeObserver();
-        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                itemImage.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                itemImage.setImageBitmap(getBitmapFromUri(pUri));
-            }
-        });
-    }
-
-    public Bitmap getBitmapFromUri(Uri uri) {
-        if (uri == null || uri.toString().isEmpty()) {
-            return null;
-        }
-
-        int targetWidth = itemImage.getWidth();
-        int targetHeight = itemImage.getHeight();
-
-        InputStream input = null;
-        try {
-            input = this.getContentResolver().openInputStream(uri);
-            BitmapFactory.Options bitmapFactoryOptions = new BitmapFactory.Options();
-            bitmapFactoryOptions.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
-            input.close();
-
-            int photoWidth = bitmapFactoryOptions.outWidth;
-            int photoHeight = bitmapFactoryOptions.outHeight;
-
-            int scaleFactor = Math.min(photoWidth / targetWidth, photoHeight / targetHeight);
-
-            bitmapFactoryOptions.inJustDecodeBounds = false;
-            bitmapFactoryOptions.inSampleSize = scaleFactor;
-            bitmapFactoryOptions.inPurgeable = true;
-
-            input = this.getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
-            input.close();
-            return bitmap;
-        } catch (FileNotFoundException fne) {
-            Log.e(LOG_TAG, "Failed to load Image", fne);
-            return null;
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Failed to load Image", e);
-            return null;
-        } finally {
-            try {
-                input.close();
-            } catch (IOException ioe) {
-            }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            if (data != null) {
-                pUri = data.getData();
-                Log.i(LOG_TAG, "Uri: " + pUri.toString());
-
-                itemImage.setImageBitmap(getBitmapFromUri(pUri));
-            }
-        }
-    }
 
     //method to set the action when the value of the field is null
     //if the value is null, do nothing
@@ -512,7 +405,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         String[] projection = {
                 ProductContract.ProductEntry._ID,
                 ProductContract.ProductEntry.COLUMN_NAME,
-                ProductContract.ProductEntry.COLUMN_IMAGE,
                 ProductContract.ProductEntry.COLUMN_PRICE,
                 ProductContract.ProductEntry.COLUMN_QUANTITY,
                 ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME,
@@ -535,7 +427,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         //go to the first row of the cursor and read data from it
         if (data.moveToFirst()) {
             int nameColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_NAME);
-            int imageColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_IMAGE);
             int priceColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_PRICE);
             int quantityColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_QUANTITY);
             int supplierNameColumnIndex = data.getColumnIndex(ProductContract.ProductEntry.COLUMN_SUPPLIER_NAME);
@@ -543,19 +434,17 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
 
             //extract the value from the cursor
             String name = data.getString(nameColumnIndex);
-            String image = data.getString(imageColumnIndex);
-            int price = data.getInt(priceColumnIndex);
+            double price = data.getDouble(priceColumnIndex);
             int quantity = data.getInt(quantityColumnIndex);
             String supplierName = data.getString(supplierNameColumnIndex);
-            int supplierPhoneNumber = data.getInt(supplierPhoneNumberColumnIndex);
+            long supplierPhoneNumber = data.getLong(supplierPhoneNumberColumnIndex);
 
             //update the view with values from the new database
             nameEditText.setText(name);
-            itemImage.setImageDa
-            priceEditText.setText(Integer.toString(price));
+            priceEditText.setText(Double.toString(price));
             quantityEditText.setText(Integer.toString(quantity));
             supplierNameEditText.setText(supplierName);
-            supplierPhoneNumberEditText.setText(Integer.toString(supplierPhoneNumber));
+            supplierPhoneNumberEditText.setText(Long.toString(supplierPhoneNumber));
 
         }
     }
@@ -569,37 +458,6 @@ public class EditorActivity extends AppCompatActivity implements LoaderManager.L
         supplierNameEditText.setText("");
         supplierPhoneNumberEditText.setText("");
 
-    }
-
-    //method() for opening the gallery to pick an image for an item
-    public void openImageSelector() {
-        Intent intent;
-        //use ACTION_GET_CONTENT if the API is lower than API 19
-        if (Build.VERSION.SDK_INT < 19) {
-            intent = new Intent(Intent.ACTION_GET_CONTENT);
-            //use ACTION_OPEN_DOCUMENT if the API is higher than API 19
-        } else {
-            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-        }
-
-        intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, "Upload Image"), PICK_IMAGE_REQUEST);
-    }
-
-    public void addImage(byte[] uploadImage){
-        ProductDbHelper dbHelper = new ProductDbHelper(this);
-        SQLiteDatabase database = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(ProductContract.ProductEntry.COLUMN_IMAGE,uploadImage);
-
-        try {
-            database.insertOrThrow(ProductContract.ProductEntry.TABLE_NAME,null,values);
-        } catch (SQLException e) {
-            Log.i(LOG_TAG,"Error: " + e.toString());
-        }
-
-        database.close();
     }
 
 }
